@@ -34,7 +34,6 @@ def validate_skills(instance, attrs, skills):
             {"detail": "'skills' is a required field."}
         )
     if skills:
-        print(skills)
         if not isinstance(skills, list):
             raise ValidationError({
                 "detail": "skills must be send in a list or array."

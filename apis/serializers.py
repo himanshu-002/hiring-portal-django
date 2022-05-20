@@ -265,15 +265,7 @@ class InterviewRoundSerializer(serializers.ModelSerializer):
         if not interviewer_obj:
             raise ValidationError(detail="Employee(Interviewer) not Found.")
         attrs.update({"interviewer": interviewer_obj})
-        print(attrs)
         return attrs
-
-    # def update(self, instance, validated_data):
-    #     interviewer_obj = validated_data.pop("interviewer", None)
-    #     if interviewer_obj:
-    #         print(interviewer_obj)
-    #     instance = super().update(instance, validated_data)
-    #     return instance
 
 
 class InterviewSerializer(serializers.ModelSerializer):

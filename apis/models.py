@@ -233,13 +233,13 @@ class Interview(models.Model):  # Sort of Interview history of candidate
         ]
         if not rounds:
             return False, ["Unexpected Error: No interview rounds found."]
-        last_round_no = rounds[-1]
-        last_round = get_interview_round(
-            interview=self, round_no=last_round_no
+        prev_round_no = rounds[-1]
+        prev_round = get_interview_round(
+            interview=self, round_no=prev_round_no
         )
-        last_round.status = InterviewRoundStatus.PASS.value
-        last_round.save()
-        next_round_no = last_round_no + 1
+        prev_round.status = InterviewRoundStatus.PASS.value
+        prev_round.save()
+        next_round_no = prev_round_no + 1
         create_interview_round(round_no=next_round_no, interview=self)
         return True, []
 
@@ -257,6 +257,9 @@ class Interview(models.Model):  # Sort of Interview history of candidate
             return False, err
         self.status = InterviewStatus.REJECT.value
         self.save()
+        InterviewRound.objects.filter(
+            interview=self
+        ).update(status=InterviewRoundStatus.FAIL.value)
         return True, []
 
     def action_select(self):
@@ -272,11 +275,24 @@ class Interview(models.Model):  # Sort of Interview history of candidate
         if check_candidate_failed_any_round(interview=self):
             err.append("Invalid Action: Candidate has failed one"
                        " of the round. can't move to next round")
+        last_round = InterviewRound.objects.filter(
+            interview=self, is_final_round=True
+        ).order_by(
+            "round_no"
+        ).first()
+        if not last_round:
+            err.append("Invalid Action :Last round still pending"
+                       " cannot proceed selection")
         if err:
             return False, err
+        if not last_round.status:
+            last_round.status = InterviewRoundStatus.PASS.value
+            last_round.save()
+        if self.status == InterviewStatus.SELECT.value:
+            return True, []
         self.status = InterviewStatus.SELECT.value
         self.save()
-        return True
+        return True, []
 
     # endregion
 
@@ -354,14 +370,3 @@ class InterviewRound(models.Model):
 
     def __str__(self):
         return f"{self.interview} - Round {self.round_no}"
-
-    def reject_interview_on_fail(self):
-        # if one of the round is failed candidate is rejected.
-        if self.status == InterviewRoundStatus.FAIL.value:
-            interview: Interview = self.interview
-            if not interview.status == InterviewStatus.REJECT.value:
-                interview.action_reject()
-
-    def save(self, *args, **kwargs):
-        self.reject_interview_on_fail()
-        super().save(*args, **kwargs)

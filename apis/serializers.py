@@ -1,5 +1,6 @@
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
+from django.db.models import Q
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError, APIException
 
@@ -222,6 +223,15 @@ class ActionSerializer(serializers.Serializer):
 
 class InterviewRoundSerializer(serializers.ModelSerializer):
     skills = SkillListSerializer(many=True, read_only=True)
+    interviewer = serializers.CharField(
+        source="interviewer.username",
+        read_only=True
+    )
+    date = serializers.DateField(
+        format="%d-%m-%Y",
+        input_formats=["%d-%m-%Y"]
+    )
+    interview = serializers.StringRelatedField()
 
     class Meta:
         model = InterviewRound
@@ -231,6 +241,7 @@ class InterviewRoundSerializer(serializers.ModelSerializer):
             "interview",
             "interviewer",
             "status",
+            "rating",
             "remarks",
             "skills",
             "date",
@@ -245,13 +256,32 @@ class InterviewRoundSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         skills = self.initial_data.get('skills', [])
         validate_skills(self.instance, attrs, skills)
+        interviewer = self.initial_data.get('interviewer', None)
+        if not self.instance and not interviewer:
+            raise ValidationError(detail="interviewer is a required field.")
+        interviewer_obj = Employee.objects.filter(
+            username=interviewer
+        ).first()
+        if not interviewer_obj:
+            raise ValidationError(detail="Employee(Interviewer) not Found.")
+        attrs.update({"interviewer": interviewer_obj})
+        print(attrs)
         return attrs
+
+    # def update(self, instance, validated_data):
+    #     interviewer_obj = validated_data.pop("interviewer", None)
+    #     if interviewer_obj:
+    #         print(interviewer_obj)
+    #     instance = super().update(instance, validated_data)
+    #     return instance
 
 
 class InterviewSerializer(serializers.ModelSerializer):
     interview_rounds = InterviewRoundSerializer(
         source="interview_round", many=True, read_only=True
     )
+    employee = serializers.CharField(source="employee.username")
+    candidate = serializers.CharField(source="candidate.username")
 
     class Meta:
         model = Interview

@@ -40,14 +40,11 @@ class CandidateInfoAdminForm(forms.ModelForm):
         email = cleaned_data.get('email', None)
         if self.instance.pk:
             existing = candidate_exists(email, self.instance)
-            if existing:
-                raise forms.ValidationError(f"Candidate with email: {email}, already exists.")
-            return cleaned_data
         else:
             existing = candidate_exists(email)
-            if existing:
-                raise forms.ValidationError(f"Candidate with email: {email}, already exists.")
-            return cleaned_data
+        if existing:
+            raise forms.ValidationError(f"Candidate with email: {email}, already exists.")
+        return cleaned_data
 
 
 class CandidateInfoAdmin(admin.ModelAdmin):

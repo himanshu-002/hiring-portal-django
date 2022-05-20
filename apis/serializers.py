@@ -109,18 +109,13 @@ class CandidateInfoSerializer(serializers.ModelSerializer):
     def validate_email(self, email):
         if self.instance:
             existing = candidate_exists(email, self.instance)
-            if existing:
-                raise ValidationError(
-                    detail=f"Candidate with email: {email}, already exists."
-                )
-            return email
         else:
             existing = candidate_exists(email)
-            if existing:
-                raise ValidationError(
-                    detail=f"Candidate with email: {email}, already exists."
-                )
-            return email
+        if existing:
+            raise ValidationError(
+                detail=f"Candidate with email: {email}, already exists."
+            )
+        return email
 
     def validate(self, attrs):
         experience = self.initial_data.get('experience', [])
@@ -136,7 +131,7 @@ class CandidateInfoSerializer(serializers.ModelSerializer):
                 'experience': experience,
             })
         skills = self.initial_data.get('skills', [])
-        attrs = validate_skills(self.instance, attrs, skills)
+        validate_skills(self.instance, attrs, skills)
         return attrs
 
     @transaction.atomic()
@@ -163,8 +158,9 @@ class CandidateInfoSerializer(serializers.ModelSerializer):
                         candidate=instance, **experience
                     )
                 else:
+                    exp_id = experience.pop("id")
                     exp_obj = WorkExperience.objects.get(
-                        candidate=instance, id=experience.pop("id")
+                        candidate=instance, id=exp_id
                     )
                     for field, value in experience.items():
                         setattr(exp_obj, field, value)
@@ -248,7 +244,7 @@ class InterviewRoundSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         skills = self.initial_data.get('skills', [])
-        attrs = validate_skills(self.instance, attrs, skills)
+        validate_skills(self.instance, attrs, skills)
         return attrs
 
 

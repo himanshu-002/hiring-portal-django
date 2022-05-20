@@ -1,6 +1,8 @@
 import json
+from json import JSONDecodeError
+
 from rest_framework import viewsets, status
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import ValidationError, APIException
 from rest_framework.generics import (
     CreateAPIView,
     get_object_or_404,
@@ -57,18 +59,25 @@ class CandidateViewSet(viewsets.ModelViewSet):
 
     def prepare_data(self, request_data):
         data = {key: request_data.get(key) for key in request_data.keys()}
-        skills = json.loads(
-            data.pop('skills')
-        ) if 'skills' in data else []
-        experience = json.loads(
-            data.pop('experience')
-        ) if 'experience' in data else []
+        try:
+            skills = json.loads(
+                data.pop('skills')
+            ) if 'skills' in data else []
+            experience = json.loads(
+                data.pop('experience')
+            ) if 'experience' in data else []
+        except JSONDecodeError as e:
+            raise APIException(
+                detail=f"Either skills or experience data is not correct. "
+                       f"please correct and try again. "
+                       f"HINT: skills is list of skill name, "
+                       f"and experience is list of work experience objects."
+            )
         if not skills and self.request.method in ['POST', 'PUT']:
             raise ValidationError(detail="'skills' are missing.")
-        data_skills = [{"name": skill} for skill in skills]
         data.update(
             {
-                'skills': data_skills,
+                'skills': skills,
                 'experience': experience
             }
         )

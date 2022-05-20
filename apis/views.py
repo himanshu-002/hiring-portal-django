@@ -1,21 +1,164 @@
-from rest_framework import permissions
+import json
+from rest_framework import viewsets, status
+from rest_framework.exceptions import ValidationError
 from rest_framework.generics import (
-    ListCreateAPIView,
-    RetrieveUpdateDestroyAPIView
+    CreateAPIView,
+    get_object_or_404,
+    RetrieveUpdateAPIView
 )
-from apis.models import DemoTable
-from apis.serializers import DemoTableSerializer
+from rest_framework.mixins import ListModelMixin, RetrieveModelMixin
+from rest_framework.parsers import MultiPartParser
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from apis.models import (
+    Employee,
+    CandidateInfo,
+    Interview,
+    InterviewRound
+)
+from apis.permissions import IsAdminOrHrEmployee, IsAdmin, IsHrEmployee
+from apis.serializers import (
+    SkillSerializer,
+    EmployeeSerializer,
+    CandidateInfoSerializer,
+    HRAssignInterviewSerializer,
+    ActionSerializer,
+    InterviewRoundSerializer,
+    InterviewSerializer
+)
+from apis.utils import is_valid_action
 
 
-class DemoTableAPIView(ListCreateAPIView):
-    permission_classes = [permissions.IsAuthenticated]
+class SkillAPIView(CreateAPIView):
+    permission_classes = [IsAdminOrHrEmployee]
+    serializer_class = SkillSerializer
+    http_method_names = ['post']
 
-    queryset = DemoTable.objects.all()
-    serializer_class = DemoTableSerializer
+
+class EmployeeViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAdminOrHrEmployee]
+    model = Employee
+    serializer_class = EmployeeSerializer
+    http_method_names = ["post", "put"]
+    lookup_url_kwarg = "pk"
+    queryset = Employee.objects.all()
 
 
-class DemoTableByIdAPIView(RetrieveUpdateDestroyAPIView):
-    permission_classes = [permissions.IsAuthenticated]
+class CandidateViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAdminOrHrEmployee]
+    model = CandidateInfo
+    serializer_class = CandidateInfoSerializer
+    lookup_url_kwarg = "pk"
+    queryset = CandidateInfo.objects.prefetch_related(
+        'skills', 'experiences'
+    ).all()
+    parser_classes = [MultiPartParser]
 
-    queryset = DemoTable.objects.all()
-    serializer_class = DemoTableSerializer
+    def prepare_data(self, request_data):
+        data = {key: request_data.get(key) for key in request_data.keys()}
+        skills = json.loads(
+            data.pop('skills')
+        ) if 'skills' in data else []
+        experience = json.loads(
+            data.pop('experience')
+        ) if 'experience' in data else []
+        if not skills and self.request.method in ['POST', 'PUT']:
+            raise ValidationError(detail="'skills' are missing.")
+        data_skills = [{"name": skill} for skill in skills]
+        data.update(
+            {
+                'skills': data_skills,
+                'experience': experience
+            }
+        )
+        return data
+
+    def process(self, kwargs, request, update=False):
+        data = self.prepare_data(request.data)
+        if update:
+            partial = kwargs.pop('partial', False)
+            instance = self.get_object()
+            serializer = self.get_serializer(
+                instance=instance,
+                data=data,
+                partial=partial
+            )
+        else:
+            serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        if update:
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def create(self, request, *args, **kwargs):
+        return self.process(kwargs, request)
+
+    def update(self, request, *args, **kwargs):
+        return self.process(kwargs, request, update=True)
+
+
+class HRAssignInterviewApiView(CreateAPIView):
+    permission_classes = [IsAdmin]
+    http_method_names = ['post']
+    serializer_class = HRAssignInterviewSerializer
+
+
+class ActionAPIView(APIView):
+    permission_classes = [IsHrEmployee]
+    http_method_names = ['post']
+    serializer_class = ActionSerializer
+
+    def get_object(self):
+        job_id = self.kwargs.get("job_id", None)
+        obj = get_object_or_404(Interview, job_id=job_id)
+        return obj
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        action = serializer.data.get("action", None)
+        if not action:
+            raise ValidationError("Action not provided.")
+        if not is_valid_action(action):
+            raise ValidationError("Invalid Action, \
+                please choose the right action")
+        obj = self.get_object()
+        action_status, action_err = getattr(obj, f"action_{action}")()
+        response_dict = {"status": action_status}
+        if not action_status and action_err:
+            response_dict.update({
+                "errors": action_err
+            })
+        status_code = 200 if action_status else 400
+        return Response(response_dict, status=status_code)
+
+
+class InterviewRoundDetailAPIView(RetrieveUpdateAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = InterviewRoundSerializer
+    queryset = InterviewRound.objects.all()
+
+    def get_object(self):
+        job_id = self.kwargs.get('job_id', None)
+        round_no = self.kwargs.get('round_no', None)
+        obj = get_object_or_404(
+            InterviewRound,
+            interview__job_id=job_id,
+            round_no=round_no
+        )
+        return obj
+
+
+class InterviewListRetrieveViewSet(
+    ListModelMixin,
+    RetrieveModelMixin,
+    viewsets.GenericViewSet
+):
+    permission_classes = [IsAdminOrHrEmployee]
+    serializer_class = InterviewSerializer
+    queryset = Interview.objects.all()
+    http_method_names = ['get']
+    lookup_field = "job_id"
+

@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     # 3rd party apps
     "corsheaders",
     "rest_framework",
+    "django_extensions"
 ] + LOCAL_INSTALLED_APPS
 
 MIDDLEWARE = [
@@ -100,12 +101,12 @@ WSGI_APPLICATION = "microservice.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": env.str("POSTGRES_DB_DATABASE"),
-        "USER": env.str("POSTGRES_DB_USERNAME"),
-        "PASSWORD": env.str("POSTGRES_DB_PASSWORD"),
-        "HOST": env.str("POSTGRES_DB_HOST"),
-        "PORT": env.str("POSTGRES_DB_PORT"),
+        "ENGINE": "django.db.backends.mysql",
+        "NAME": env.str("DB_DATABASE"),
+        "USER": env.str("DB_USERNAME"),
+        "PASSWORD": env.str("DB_PASSWORD"),
+        "HOST": env.str("DB_HOST"),
+        "PORT": env.str("DB_PORT"),
     }
 }
 
@@ -147,7 +148,15 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
-STATIC_URL = "/static/"
+STATIC_URL = '/static/'
+
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "static")
+]
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 # Log settings
 # https://docs.djangoproject.com/en/2.2/topics/logging/

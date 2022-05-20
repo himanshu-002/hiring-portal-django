@@ -17,11 +17,12 @@ Python Django Microservice Template Repository
     ```
 5. Add `.env` file to the project, you can refer `.env.template`
 6. Make database migrations:
-    1. ***Note***: Create a DB in PostgreSQL with the same name that you have been added in the .env file before making migrations to avoid unexpected errors
+    1. ***Note***: Create a DB in MySQL with the same name that you have been added in the .env file before making migrations to avoid unexpected errors
     ```bash
     ./manage.py makemigrations
     ./manage.py migrate
     ```
+   ***Warning***: if above gives some error, try installing this: `sudo apt-get install libmysqlclient-dev`, and try again
 7. Run the project
     ```bash
     ./manage.py runserver
@@ -38,4 +39,4 @@ Python Django Microservice Template Repository
       2. For example, if you are working on [Issue #1](https://github.com/python-data-engineering/data-pipeline-boilerplate/issues/1) then your branch name will be `feat/Issue#1` or `fix/Issue#1`. Here, `Issue` is the **tag** and `#1` is the **number** of that issue
 
 ## URLs
-1. Admin Panel - `{HOST}/microservice-admin`
+1. Admin Panel - `{HOST}/admin`

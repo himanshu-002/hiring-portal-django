@@ -1,6 +1,5 @@
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
-from django.db.models import Q
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError, APIException
 
@@ -273,7 +272,7 @@ class InterviewSerializer(serializers.ModelSerializer):
         source="interview_round", many=True, read_only=True
     )
     employee = serializers.CharField(source="employee.username")
-    candidate = serializers.CharField(source="candidate.username")
+    candidate = serializers.CharField(source="candidate.email")
 
     class Meta:
         model = Interview

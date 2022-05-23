@@ -258,7 +258,7 @@ class Interview(models.Model):  # Sort of Interview history of candidate
         self.status = InterviewStatus.REJECT.value
         self.save()
         InterviewRound.objects.filter(
-            interview=self
+            interview=self, status__isnull=True
         ).update(status=InterviewRoundStatus.FAIL.value)
         return True, []
 

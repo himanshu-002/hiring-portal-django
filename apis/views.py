@@ -1,6 +1,5 @@
 import json
 from json import JSONDecodeError
-
 from rest_framework import viewsets, status
 from rest_framework.exceptions import ValidationError, APIException
 from rest_framework.generics import (
@@ -131,9 +130,11 @@ class ActionAPIView(APIView):
         action = serializer.data.get("action", None)
         if not action:
             raise ValidationError("Action not provided.")
-        if not is_valid_action(action):
-            raise ValidationError("Invalid Action, \
-                please choose the right action")
+        valid_action, action_list = is_valid_action(action)
+        if not valid_action:
+            raise ValidationError(
+                f"Invalid Action: Actions are as follows {', '.join(action_list)}"
+            )
         obj = self.get_object()
         action_status, action_err = getattr(obj, f"action_{action}")()
         response_dict = {"status": action_status}

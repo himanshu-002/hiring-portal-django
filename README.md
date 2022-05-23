@@ -16,10 +16,10 @@ Before you begin, ensure you have met the following requirements:
     
     mysql> CREATE DATABASE HiringPortal;
     
-    # Creating new MySql user
+    # Creating new MySql user (Optional)
     mysql> CREATE USER '<username>'@'localhost' IDENTIFIED BY '<password>';
     
-    # Granting privileges to the new user
+    # Granting privileges to the new/existing user
     mysql> GRANT ALL PRIVILEGES ON *.* TO '<username>'@'localhost' WITH GRANT OPTION;
     ```
 

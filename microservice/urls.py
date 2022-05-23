@@ -17,11 +17,21 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
+from rest_framework_swagger.views import get_swagger_view
+
+api_patterns = [
+    path('', include('apis.urls')),
+]
+
+schema_view = get_swagger_view(
+    title='Hiring Portal API Endpoints',
+    patterns=api_patterns,
+)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('apis.urls')),
-]
+    path('', schema_view),
+] + api_patterns
 
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

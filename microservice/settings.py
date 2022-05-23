@@ -59,7 +59,8 @@ INSTALLED_APPS = [
     # 3rd party apps
     "corsheaders",
     "rest_framework",
-    "django_extensions"
+    "django_extensions",
+    "rest_framework_swagger",
 ] + LOCAL_INSTALLED_APPS
 
 MIDDLEWARE = [
@@ -89,6 +90,9 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
             ],
+            'libraries': {
+                'staticfiles': 'django.templatetags.static',
+            }
         },
     },
 ]
@@ -186,4 +190,12 @@ LOGGING = {
             "propagate": True,
         },
     },
+}
+
+REST_FRAMEWORK = {
+    'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer',
+    ]
 }

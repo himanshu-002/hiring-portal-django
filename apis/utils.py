@@ -24,8 +24,8 @@ def is_valid_action(action):
         if act.startswith("action")
     ]
     if action.lower() in action_list:
-        return True
-    return False
+        return True, []
+    return False, action_list
 
 
 def validate_skills(instance, attrs, skills):

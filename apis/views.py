@@ -56,6 +56,7 @@ class CandidateViewSet(viewsets.ModelViewSet):
         'skills', 'experiences'
     ).all()
     parser_classes = [MultiPartParser]
+    http_method_names = ['get', 'post', 'put', 'patch']
 
     def prepare_data(self, request_data):
         data = {key: request_data.get(key) for key in request_data.keys()}

@@ -1,42 +1,50 @@
-# python-django-microservice-template
-Python Django Microservice Template Repository
+# Hiring Portal
+<img src="https://img.shields.io/badge/Python-3.8.10-blue.svg" height="30"></img> 
+<img src="https://img.shields.io/badge/Django-3.1.7-blue.svg" height="30"></img> 
+<img src="https://img.shields.io/badge/Django%20Rest%20Framework-3.12.4-blue.svg" height="30"></img>
+<hr/>
 
-## How to run?
-**Steps to configure and run the project**
-1. Clone this repository
-2. Create a virtual environment (optional but recommended)
-3. Initialise pre-commit hook:
-    ```bash
-    pip install pre-commit && \
-    pre-commit install && \
-    export LC_ALL=en_US.UTF-8; export LANG=en_US.UTF-8
+
+This is the Backend setup guide for the project Hiring Portal.
+## Installation
+
+Before you begin, ensure you have met the following requirements:
+
+* Database creation and setup:
     ```
-4. Install required packages
-    ```bash
-    pip install -r requirements.txt
-    ```
-5. Add `.env` file to the project, you can refer `.env.template`
-6. Make database migrations:
-    1. ***Note***: Create a DB in MySQL with the same name that you have been added in the .env file before making migrations to avoid unexpected errors
-    ```bash
-    ./manage.py makemigrations
-    ./manage.py migrate
-    ```
-   ***Warning***: if above gives some error, try installing this: `sudo apt-get install libmysqlclient-dev`, and try again
-7. Run the project
-    ```bash
-    ./manage.py runserver
+    $ sudo mysql
+    
+    mysql> CREATE DATABASE HiringPortal;
+    
+    # Creating new MySql user
+    mysql> CREATE USER '<username>'@'localhost' IDENTIFIED BY '<password>';
+    
+    # Granting privileges to the new user
+    mysql> GRANT ALL PRIVILEGES ON *.* TO '<username>'@'localhost' WITH GRANT OPTION;
     ```
 
-## GitHub Standards
-1. Please adhere to following standards while using GitHub
-   1. Initialise pre-commit hook as mentioned in the above steps
-   2. Never make any commits directly to the `master` or `develop` branch
-   3. Always use `feat` and `fix` branches for adding any new feature or fixing any existing bug
-   4. `feat` and `fix` branches will always be created from `develop` branch and **not from the `master` branch**
-   5. Naming convention for `feat` and `fix` branches
-      1. Name of `feat` and `fix` branch will be followed by the issue you are working, you can check assigned issues in [Project Dashboard](https://github.com/python-data-engineering/data-pipeline-boilerplate/projects/1)
-      2. For example, if you are working on [Issue #1](https://github.com/python-data-engineering/data-pipeline-boilerplate/issues/1) then your branch name will be `feat/Issue#1` or `fix/Issue#1`. Here, `Issue` is the **tag** and `#1` is the **number** of that issue
+* Steps to configure the backend and run the project
+  1. Create/Activate virtualenv
+  2. Install required packages
+      ```bash
+      pip install -r requirements.txt
+      ```
+  3. Add `.env` file to the project, you can refer to `.env.template`, copy and change Db Config accordingly. 
+  4. Make database migrations:
+      1. ***Note***: Make sure created DB in MySQL is with the same name that you have added in the `.env` file before making migrations to avoid unexpected errors
+      ```bash
+      $ ./manage.py makemigrations
+      $ ./manage.py migrate
+      ```
+     ***Warning***: if above gives some error, try installing this: `sudo apt-get install libmysqlclient-dev`, and try again
+  5. Run the project
+      ```bash
+      $ ./manage.py runserver
+      ```
+  6. Create Superuser to get admin access
+     ```bash
+     $ ./manage.py createsuperuser
+     ```
 
 ## URLs
 1. Admin Panel - `{HOST}/admin`

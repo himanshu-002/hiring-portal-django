@@ -47,6 +47,63 @@ class EmployeeViewSet(viewsets.ModelViewSet):
 
 
 class CandidateViewSet(viewsets.ModelViewSet):
+    """
+    Candidates
+    ---
+    retrieve: Gets Candidate Detail
+    create:
+        Creates new candidates
+        `Parameters`:
+        skills:
+            - `type`: List of [Skill] names.
+            - `required`: true
+        experience:
+            - `type`: List of objects containing work experience info.
+            - `required`: false
+        `example`:
+        ```
+            "skills":
+            [
+              "string",
+              "string",
+              ...
+            ],
+            "experience":
+            [
+                {
+                    "designation": "string",
+                    "description": "string",
+                    "total_experience": 1
+                },
+                ...
+            ]
+        ```
+    update:
+        Updates new candidates
+        `Parameters`:
+        skills:
+            - `type`: List of Skill names.
+        experience:
+            - `type`: List of objects containing work experience info.
+        `example`:
+        ```
+            "skills":
+            [
+              "string",
+              "string",
+              ...
+            ],
+            "experience":
+            [
+                {
+                    "designation": "string",
+                    "description": "string",
+                    "total_experience": 1
+                },
+                ...
+            ]
+        ```
+    """
     permission_classes = [IsAdminOrHrEmployee]
     model = CandidateInfo
     serializer_class = CandidateInfoSerializer

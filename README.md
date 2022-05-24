@@ -47,4 +47,5 @@ Before you begin, ensure you have met the following requirements:
      ```
 
 ## URLs
-1. Admin Panel - `{HOST}/admin`
+1. Swagger Docs - `localhost:8000/`
+2. Admin Panel - `localhost:8000/admin/`

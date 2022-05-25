@@ -60,7 +60,6 @@ INSTALLED_APPS = [
     "corsheaders",
     "rest_framework",
     "django_extensions",
-    "rest_framework_swagger",
 ] + LOCAL_INSTALLED_APPS
 
 MIDDLEWARE = [
@@ -81,7 +80,9 @@ ROOT_URLCONF = "microservice.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [
+            os.path.join(BASE_DIR, "templates/")
+        ],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -193,7 +194,6 @@ LOGGING = {
 }
 
 REST_FRAMEWORK = {
-    'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
         'rest_framework.renderers.BrowsableAPIRenderer',

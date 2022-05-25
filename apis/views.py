@@ -24,7 +24,7 @@ from apis.serializers import (
     EmployeeSerializer,
     CandidateInfoSerializer,
     HRAssignInterviewSerializer,
-    ActionSerializer,
+    InterviewActionSerializer,
     InterviewRoundSerializer,
     InterviewSerializer
 )
@@ -47,63 +47,6 @@ class EmployeeViewSet(viewsets.ModelViewSet):
 
 
 class CandidateViewSet(viewsets.ModelViewSet):
-    """
-    Candidates
-    ---
-    retrieve: Gets Candidate Detail
-    create:
-        Creates new candidates
-        `Parameters`:
-        skills:
-            - `type`: List of [Skill] names.
-            - `required`: true
-        experience:
-            - `type`: List of objects containing work experience info.
-            - `required`: false
-        `example`:
-        ```
-            "skills":
-            [
-              "string",
-              "string",
-              ...
-            ],
-            "experience":
-            [
-                {
-                    "designation": "string",
-                    "description": "string",
-                    "total_experience": 1
-                },
-                ...
-            ]
-        ```
-    update:
-        Updates new candidates
-        `Parameters`:
-        skills:
-            - `type`: List of Skill names.
-        experience:
-            - `type`: List of objects containing work experience info.
-        `example`:
-        ```
-            "skills":
-            [
-              "string",
-              "string",
-              ...
-            ],
-            "experience":
-            [
-                {
-                    "designation": "string",
-                    "description": "string",
-                    "total_experience": 1
-                },
-                ...
-            ]
-        ```
-    """
     permission_classes = [IsAdminOrHrEmployee]
     model = CandidateInfo
     serializer_class = CandidateInfoSerializer
@@ -171,10 +114,10 @@ class HRAssignInterviewApiView(CreateAPIView):
     serializer_class = HRAssignInterviewSerializer
 
 
-class ActionAPIView(APIView):
+class InterviewActionAPIView(APIView):
     permission_classes = [IsHrEmployee]
     http_method_names = ['post']
-    serializer_class = ActionSerializer
+    serializer_class = InterviewActionSerializer
 
     def get_object(self):
         job_id = self.kwargs.get("job_id", None)
@@ -182,18 +125,26 @@ class ActionAPIView(APIView):
         return obj
 
     def post(self, request, *args, **kwargs):
+        from inspect import getfullargspec, formatargspec
+
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         action = serializer.data.get("action", None)
+        remarks = serializer.data.get("remarks", None)
         if not action:
             raise ValidationError("Action not provided.")
         valid_action, action_list = is_valid_action(action)
         if not valid_action:
             raise ValidationError(
-                f"Invalid Action: Actions are as follows {', '.join(action_list)}"
+                f"Invalid Action: Actions are as "
+                f"follows {', '.join(action_list)}"
             )
         obj = self.get_object()
-        action_status, action_err = getattr(obj, f"action_{action}")()
+        action_func = getattr(obj, f"action_{action}")
+        action_func_args = getfullargspec(action_func).args
+        action_status, action_err = action_func(
+            remarks=remarks
+        ) if remarks and "remarks" in action_func_args else action_func()
         response_dict = {"status": action_status}
         if not action_status and action_err:
             response_dict.update({

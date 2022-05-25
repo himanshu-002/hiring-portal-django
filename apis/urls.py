@@ -38,7 +38,7 @@ urlpatterns = [
     ),
     path(
         'api/v1/interview/action/<str:job_id>/',
-        views.ActionAPIView.as_view(),
+        views.InterviewActionAPIView.as_view(),
         name="interview-action"
     ),
     path(

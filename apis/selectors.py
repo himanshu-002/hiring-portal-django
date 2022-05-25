@@ -25,4 +25,8 @@ def create_interview_round(round_no, interview):
     )
 
 
+def get_latest_interview_round(interview):
+    return models.InterviewRound.objects.filter(
+        interview=interview
+    ).order_by("-round_no").first()
 

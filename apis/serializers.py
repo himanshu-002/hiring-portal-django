@@ -216,8 +216,13 @@ class HRAssignInterviewSerializer(serializers.ModelSerializer):
         return candidate
 
 
-class ActionSerializer(serializers.Serializer):
+class InterviewActionSerializer(serializers.Serializer):
     action = serializers.CharField()
+    remarks = serializers.CharField(
+        required=False,
+        help_text="Reason or remarks for selecting|rejecting"
+                  "|recommending|moving to next round"
+    )
 
 
 class InterviewRoundSerializer(serializers.ModelSerializer):

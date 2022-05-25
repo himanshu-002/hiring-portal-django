@@ -17,21 +17,25 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
-from rest_framework_swagger.views import get_swagger_view
+from django.views.generic import TemplateView
+from rest_framework.schemas import get_schema_view
 
-api_patterns = [
-    path('', include('apis.urls')),
-]
-
-schema_view = get_swagger_view(
-    title='Hiring Portal API Endpoints',
-    patterns=api_patterns,
+openapi_view = get_schema_view(
+    title='Hiring Portal',
+    description='Hiring Portal API Endpoints',
+    version="1.0.0",
+    urlconf='apis.urls'
 )
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', schema_view),
-] + api_patterns
+    path('openapi/', openapi_view, name='openapi-schema'),
+    path('', TemplateView.as_view(
+        template_name='swagger-ui.html',
+        extra_context={'schema_url': 'openapi-schema'}
+    ), name='swagger-ui'),
+    path('', include('apis.urls')),
+]
 
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

@@ -9,7 +9,9 @@ from django.db import models
 from .selectors import (
     get_first_interview_round,
     check_candidate_failed_any_round,
-    create_interview_round, get_interview_round
+    create_interview_round,
+    get_interview_round,
+    get_latest_interview_round
 )
 from .validators import validate_alphabets_only
 
@@ -201,7 +203,7 @@ class Interview(models.Model):  # Sort of Interview history of candidate
         create_interview_round(round_no=1, interview=self)
         return True, []
 
-    def action_move_to_next_round(self):
+    def action_move_to_next_round(self, remarks=None):
         err = []
         selected = InterviewStatus.SELECT.value
         rejected = InterviewStatus.REJECT.value
@@ -237,13 +239,15 @@ class Interview(models.Model):  # Sort of Interview history of candidate
         prev_round = get_interview_round(
             interview=self, round_no=prev_round_no
         )
-        prev_round.status = InterviewRoundStatus.PASS.value
-        prev_round.save()
+        if not prev_round.status:
+            prev_round.status = InterviewRoundStatus.PASS.value
+            prev_round.remarks = remarks
+            prev_round.save()
         next_round_no = prev_round_no + 1
         create_interview_round(round_no=next_round_no, interview=self)
         return True, []
 
-    def action_reject(self):
+    def action_reject(self, remarks=None):
         err = []
         if not get_first_interview_round(interview=self):
             err.append("Invalid Action: First Round isn't started.")
@@ -259,10 +263,10 @@ class Interview(models.Model):  # Sort of Interview history of candidate
         self.save()
         InterviewRound.objects.filter(
             interview=self, status__isnull=True
-        ).update(status=InterviewRoundStatus.FAIL.value)
+        ).update(status=InterviewRoundStatus.FAIL.value, remarks=remarks)
         return True, []
 
-    def action_select(self):
+    def action_select(self, remarks=None):
         err = []
         if not get_first_interview_round(interview=self):
             err.append("Invalid Action: First Round isn't started.")
@@ -285,13 +289,35 @@ class Interview(models.Model):  # Sort of Interview history of candidate
                        " cannot proceed selection")
         if err:
             return False, err
-        if not last_round.status:
-            last_round.status = InterviewRoundStatus.PASS.value
-            last_round.save()
+        last_round.status = InterviewRoundStatus.PASS.value
+        last_round.remarks = remarks
+        last_round.save()
         if self.status == InterviewStatus.SELECT.value:
             return True, []
         self.status = InterviewStatus.SELECT.value
         self.save()
+        return True, []
+
+    def action_recommend(self, remarks=None):
+        err = []
+        selected = InterviewStatus.SELECT.value
+        rejected = InterviewStatus.REJECT.value
+        if self.status == selected or self.status == rejected:
+            err.append(f"Invalid Action: Candidate status is already "
+                       f"{self.status}")
+        if not get_first_interview_round(interview=self):
+            err.append("Invalid Action: First Round isn't started.")
+        if check_candidate_failed_any_round(interview=self):
+            err.append("Invalid Action: Candidate has failed one"
+                       " of the round. can't recommend")
+        if err:
+            return False, err
+        prev_round = get_latest_interview_round(interview=self)
+        prev_round.status = InterviewRoundStatus.RECOMMEND.value
+        prev_round.remarks = remarks
+        prev_round.save()
+        if prev_round.is_final_round is False:
+            self.action_move_to_next_round()
         return True, []
 
     # endregion
@@ -323,7 +349,7 @@ class Interview(models.Model):  # Sort of Interview history of candidate
 class InterviewRoundStatus(models.TextChoices):
     PASS = "PASS"
     FAIL = "FAIL"
-    REVIEW = "REVIEW"
+    RECOMMEND = "RECOMMEND"
 
 
 class InterviewRound(models.Model):
@@ -345,7 +371,7 @@ class InterviewRound(models.Model):
         blank=True
     )
     status = models.CharField(
-        max_length=6,
+        max_length=9,
         choices=InterviewRoundStatus.choices,
         null=True,
         blank=True
